@@ -1,5 +1,6 @@
 import os
 import openpyxl
+import random
 from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton,  QPlainTextEdit, QMessageBox, QFileDialog
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtCore import QDir
@@ -15,10 +16,12 @@ def xls2xlsx(filePath):
     
 def ReadData(filePath):
     workbook = openpyxl.load_workbook(filePath+"x")	# 返回一个workbook数据类型的值
-    print(workbook.sheetnames)	# 打印Excel表中的所有表
     sheet = workbook.active
-    sheet.title = 'sheet1'
-    print(sheet)
+    student_id = sheet['A3:F49']
+    print(student_id[0][0].value)
+    print(student_id[0][1].value)
+    print(student_id[0][2].value)
+    
     os.remove(filePath+"x")
     
 class Stats():
