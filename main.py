@@ -1,10 +1,12 @@
 import os
 import openpyxl
 import random
-from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton,  QPlainTextEdit, QMessageBox, QFileDialog
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton,  QPlainTextEdit, QMessageBox, QFileDialog, QTableWidgetItem
 from PySide6.QtUiTools import QUiLoader
-from PySide6.QtCore import QDir
+from PySide6.QtCore import QDir, Qt
 import win32com.client as win32
+
+studentNum = 0
 
 #将xls格式文件转换为xlsx格式，openpyxl包无法处理xls格式文件
 def xls2xlsx(filePath):
@@ -21,9 +23,7 @@ def ReadData():
     student_id = sheet['A3:F49']
     student_id_list = list(student_id)
     random.shuffle(student_id_list)
-    print(student_id_list[0][0].value)
-    print(student_id_list[0][1].value)
-    print(student_id_list[0][2].value)
+    workbook.close()
     
     return student_id_list
     
@@ -31,20 +31,41 @@ class Stats():
 
     def __init__(self):
         self.ui = QUiLoader().load('main.ui')
-
+        self.ui.tableWidget.setColumnWidth(0, 70)
+        self.ui.tableWidget.setColumnWidth(1, 120)
+        self.ui.tableWidget.setColumnWidth(2, 120)
         self.ui.RollCall.clicked.connect(self.RollCall)
         self.ui.Absenteeism.clicked.connect(self.Absenteeism)
         self.ui.ImportList.clicked.connect(self.ImportList)
-        self.ui.OpenList.clicked.connect(self.OpenList)
+        self.ui.Sort.clicked.connect(self.Sort)
+        self.ui.SaveData.clicked.connect(self.SaveData)
+        self.ui.OpenData.clicked.connect(self.OpenData)
 
 
     def RollCall(self):
-        self.ui.studentName.append(student_id_list[0][2].value)
-        self.ui.studentClass.append(student_id_list[0][0].value)
-        self.ui.studentID.append(student_id_list[0][1].value)
+        global studentNum
+        
+        self.ui.studentName.setPlainText(student_id_list[studentNum][2].value)
+        self.ui.studentClass.setPlainText(student_id_list[studentNum][0].value)
+        self.ui.studentID.setPlainText(student_id_list[studentNum][1].value)
+        self.ui.tableWidget.insertRow(0)
+        nameItem = QTableWidgetItem("%s" % student_id_list[studentNum][2].value)
+        classItem = QTableWidgetItem("%s" % student_id_list[studentNum][0].value)
+        idItem = QTableWidgetItem("%s" % student_id_list[studentNum][1].value)
+        statusItem = QTableWidgetItem("%s" % '已到')
+        self.ui.tableWidget.setItem(0,0,nameItem)
+        self.ui.tableWidget.setItem(0,1,classItem)
+        self.ui.tableWidget.setItem(0,2,idItem)
+        self.ui.tableWidget.setItem(0,3,statusItem)
+        studentNum += 1
+        #还需要实现按学号排序
+        
+    def Sort(self):
+        self.ui.tableWidget.sortItems(2,Qt.AscendingOrder)
     
     def Absenteeism(self):
-        info = self.textEdit.toPlainText()
+        statusItem = QTableWidgetItem("%s" % '旷课')
+        self.ui.tableWidget.setItem(0,3,statusItem)
         
     def ImportList(self):
         filePath = QFileDialog.getOpenFileName(self.ui, "导入名单")[0]
@@ -52,8 +73,15 @@ class Stats():
         print(filePath)
         xls2xlsx(filePath)
     
-    def OpenList(self):
-        info = self.textEdit.toPlainText()
+    def SaveData(self):
+        workbook = openpyxl.load_workbook("Log.xlsx")	# 返回一个workbook数据类型的值
+        sheet = workbook.active
+        sheet['G2'] = 1
+        workbook.save("Log.xlsx")
+        workbook.close()
+        
+    def OpenData(self):
+        os.startfile("Log.xlsx")
     
 
 app = QApplication([])
